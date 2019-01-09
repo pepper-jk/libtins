@@ -31,6 +31,7 @@
     #include <sys/time.h>
 #endif
 #include <string.h>
+#include <tins/ip.h>
 #include <tins/packet_writer.h>
 #include <tins/packet.h>
 #include <tins/pdu.h>
@@ -75,7 +76,13 @@ void PacketWriter::write(PDU& pdu, const struct timeval& tv) {
     memset(&header, 0, sizeof(header));
     header.ts = tv;
     header.caplen = static_cast<bpf_u_int32>(buffer.size());
-    header.len = static_cast<bpf_u_int32>(buffer.size());
+    try {
+        const PDU &eth = pdu.rfind_pdu<PDU>(Tins::PDU::ETHERNET_II);
+        const IP &ip = pdu.rfind_pdu<IP>(Tins::PDU::IP);
+        header.len = static_cast<bpf_u_int32>(eth.size()+ip.tot_len());
+    } catch (pdu_not_found& err) {
+        header.len = static_cast<bpf_u_int32>(buffer.size());
+    }
     pcap_dump((u_char*)dumper_, &header, &buffer[0]);
 }
 
