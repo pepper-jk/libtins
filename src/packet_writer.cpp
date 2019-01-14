@@ -79,7 +79,7 @@ void PacketWriter::write(PDU& pdu, const struct timeval& tv) {
     try {
         const PDU &eth = pdu.rfind_pdu<PDU>(Tins::PDU::ETHERNET_II);
         const IP &ip = pdu.rfind_pdu<IP>(Tins::PDU::IP);
-        header.len = static_cast<bpf_u_int32>(eth.size()+ip.tot_len());
+        header.len = static_cast<bpf_u_int32>(eth.size())+static_cast<bpf_u_int32>(ip.tot_len());
     } catch (pdu_not_found& err) {
         header.len = static_cast<bpf_u_int32>(buffer.size());
     }
