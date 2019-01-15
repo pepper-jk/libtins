@@ -71,18 +71,19 @@ void PacketWriter::write(Packet& packet) {
 }
 
 void PacketWriter::write(PDU& pdu, const struct timeval& tv) {
-    PDU::serialization_type buffer = pdu.serialize();
     struct pcap_pkthdr header;
     memset(&header, 0, sizeof(header));
     header.ts = tv;
-    header.caplen = static_cast<bpf_u_int32>(buffer.size());
     try {
         const PDU &eth = pdu.rfind_pdu<PDU>(Tins::PDU::ETHERNET_II);
         const IP &ip = pdu.rfind_pdu<IP>(Tins::PDU::IP);
         header.len = static_cast<bpf_u_int32>(eth.size())+static_cast<bpf_u_int32>(ip.tot_len());
     } catch (pdu_not_found& err) {
+        PDU::serialization_type buffer = pdu.serialize();
         header.len = static_cast<bpf_u_int32>(buffer.size());
     }
+    PDU::serialization_type buffer = pdu.serialize();
+    header.caplen = static_cast<bpf_u_int32>(buffer.size());
     pcap_dump((u_char*)dumper_, &header, &buffer[0]);
 }
 
